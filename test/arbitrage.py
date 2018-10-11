@@ -69,47 +69,47 @@ def identify_arbitrage(symbol, exchange_list):
 
     return ask_market, bid_market
 
-
-
-
-
 def buy_sell(accounts, ask_market, bid_market, symbol, amount):
 
     '''
     Initiate a transaction between accounts and exchanges
-    :param account1: account where we will buy currency
-    :param account2: account where we will sell currency
-    :param exchange1: exchange where we will buy currency
-    :param exchange2: exchange name where we will sell currency
+    :param accounts: dictionary of exchanges that we own with the account information as their values
+    :param ask_market: exchange where we will buy currency
+    :param bid_market: exchange where we will sell currency
     :param symbol: (ex. BTC/USD)
-    :return: Nothing
+    :return: Profit value after the exchange
     '''
 
     buy_exchange = getattr(ccxt, ask_market)
     sell_exchange = getattr(ccxt, bid_market)
 
-    account1 = accounts[ask_market]
-    account2 = accounts[bid_market]
+    buy_account = accounts[ask_market]
+    sell_account = accounts[bid_market]
 
-    buy = buy_exchange(account1)
-    sell = sell_exchange(account2)
+    buy = buy_exchange(buy_account)
+    sell = sell_exchange(sell_account)
 
     buy.load_markets()
     sell.load_markets()
 
     if buy.has['createMarketOrder'] and sell.has['createMarketOrder']:
 
-        buy.createbuymarketorder(symbol, amount)
-        transfer(account1, account2, symbol.split('/')[0], amount)
-        sell.create_limit_sell_order(symbol, amount)
-        transfer(account2, account1, symbol.split('/')[1], (sell_cost-buy_cost))
+        buy.createbuymarketorder(symbol, amount) #purchase the currency
 
-    buy_cost = buy.fetch_my_trades(symbol)[-1]['cost']
-    print('buy_cost = ' + str(buy_cost))
-    sell_cost = sell.fetch_my_trades(symbol)[-1]['cost']
-    print('sell_cost = ' + str(sell_cost))
+        if transfer(buy_account, sell_account, symbol.split('/')[0], amount): #initiate the transfer and check if it returns true.
 
-    return sell_cost - buy_cost
+            sell.create_limit_sell_order(symbol, amount)
+            buy_cost = buy.fetch_my_trades(symbol)[-1]['cost']
+            print('buy_cost = ' + str(buy_cost))
+            sell_cost = sell.fetch_my_trades(symbol)[-1]['cost']
+            print('sell_cost = ' + str(sell_cost))
+            transfer(sell_account, buy_account, symbol.split('/')[1], (sell_cost-buy_cost))
+            return sell_cost - buy_cost
+
+        else:
+            return 'transfer unsuccessful'
+
+
 
 def check_balance(account, exchange):
     '''
@@ -136,21 +136,29 @@ def transfer(from_account, to_account, curr, amt):
     '''
 
     if from_account == 'binance':
-        return 'cannot transfer from binance'
+        print('cannot transfer from binance')
+        return False
 
     from_account = getattr(ccxt, from_account)
     from_account = from_account(accounts[from_account])
     to_account = getattr(ccxt, to_account)
     to_account = to_account(accounts[to_account])
+
     from_account.load_markets()
     to_account.load_markets()
-    to = to_account.feath_deposit_address(curr)
+
+    to = to_account.fetch_deposit_address(curr)
     add = to['address']
     from_account.withdraw(curr, amt, add)
 
     return 'transfer successful \n {} balance: {} \n {} balance: {}'.format(from_account, from_account.fetch_balance()['info'],
-                                                                            to_account.fetch_balance()['info'], to_account)
+                                                                            to_account, to_account.fetch_balance()['info'])
+def main():
 
-ask_market, bid_market = identify_arbitrage('LTC/USD', exchanges)
-profit = buy_sell(accounts, ask_market, bid_market, 'LTC/USD', 0.1)
-print('Profit earned by the arbitrage trade : ' + str(profit))
+    ask_market, bid_market = identify_arbitrage('LTC/USD', exchanges)
+    profit = buy_sell(accounts, ask_market, bid_market, 'LTC/USD', 0.1)
+    print('Profit earned by the arbitrage trade : ' + str(profit))
+
+
+if __name__ == '__main__':
+    main()
