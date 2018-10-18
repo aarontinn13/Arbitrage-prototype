@@ -1,24 +1,49 @@
-import ccxt
+import time
+class Clock(object):
 
-bitstamp = ccxt.bitstamp
+    def __init__(self,seconds=0, minutes=0, hours=0 ):
+        if seconds > 59:
+            minutes = seconds // 60
+            seconds %= 60
+        if minutes > 59:
+            hours = minutes // 60
+            minutes %= 60
+        self.hours = hours
+        self.minutes = minutes
+        self.seconds = seconds
 
-bitstamp = bitstamp({'uid': 'kwsm6715',
-                    'api_key': 'eFrPYCe3KJ2w6aKb6eUYwvBqjdVnkmoU',
-                    'secret': '6xc0U55xj4pHJtQDRntzIobGfcoLDlfJ',
-                    })
+    def tick(self):
+        """ Time will go down by one second"""
+        while True:
+            if self.seconds <10:
+                z = '0'+str(self.seconds)
+            else:
+                z = str(self.seconds)
+            if self.minutes < 10:
+                y = '0'+str(self.minutes)
+            else:
+                y = str(self.minutes)
+            if self.hours < 10:
+                x = '0'+str(self.hours)
+            else:
+                x = str(self.hours)
+            print("\r" + x + ":" + y + ":" + z,)
+            time.sleep(1)
+            self.seconds -= 1
+            if self.seconds == -1:
+                if self.minutes != 0:
+                    self.seconds = 59
+                    self.minutes -= 1
+                else:
+                    if self.hours != 0:
+                        self.minutes = 59
+                        self.hours -= 1
+            if z == '00' and y == '00' and x == '00':
+                break
 
-bitstamp.load_markets()
+        print("\rBLASTOFF!")
+        time.sleep(1)
 
-print('bitstamp LTC balance:', bitstamp.fetch_balance()['info']['ltc_available'])
-
-poloniex = ccxt.poloniex
-
-poloniex = poloniex({'uid': 'noah13nelson@gmail.com',
-                    'api_key': 'JHGCEVR5-VOLY72AW-ZTDH2DXP-S14TO6KY',
-                    'secret': '93475ba24b1a371bbbc07937cfdb5da3f284f389039afba9f90fe208634ff5a6faaedd79e9b2ff14cb937c0c7f9984ee1ce038827038c7dc6447359bead24b8b',
-                    })
-
-poloniex.load_markets()
-
-
-print('poloniex LTC balance:',poloniex.fetch_balance()['info']['LTC']['available'])
+input = input('How many seconds?')
+x = Clock(int(input))
+x.tick()
