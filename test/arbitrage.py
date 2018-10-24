@@ -16,6 +16,7 @@ accounts = {'bitstamp': {'uid': 'kwsm6715',
                          'api_key': 'JHGCEVR5-VOLY72AW-ZTDH2DXP-S14TO6KY',
                          'secret': '93475ba24b1a371bbbc07937cfdb5da3f284f389039afba9f90fe208634ff5a6faaedd79e9b2ff14cb937c0c7f9984ee1ce038827038c7dc6447359bead24b8b',
                          },
+
             'yobit': {'uid': 'noah13nelson@gmail.com',
                       'api_key': '8FA4E982CAB11663C11936006F05097B',
                       'secret': '7ddf527b43a6e876e8dc0a35714bfe2d',
@@ -28,45 +29,84 @@ accounts = {'bitstamp': {'uid': 'kwsm6715',
             }
 
 exchanges = ['bitstamp', 'binance', 'livecoin', 'yobit', 'poloniex']
-
 stable_coins = ['USDT', 'TUSD', 'DAI']
 
+global buy_id, sell_id, cancel_id, b_exc, s_exc, buy_stable_id, sell_stable_id
 
-def initialize():
+'''
+def initialize(): 
     global buy_id
-
     if buy_id == None:
+
+
+
         buy_id = False
+
+
 
     global sell_id
 
+
+
     if sell_id == None:
+
         sell_id = False
+
+
 
     global buy_stable_id
 
+
+
     if buy_stable_id == None:
+
+
+
         buy_stable_id = False
+
+
 
     global sell_stable_id
 
+
+
     if sell_stable_id == None:
+
         sell_stable_id = False
+
+
 
     global cancel_id
 
+
+
     if cancel_id == None:
+
+
+
         cancel_id = False
+
+
 
     global b_exc
 
+
+
     if b_exc == None:
+
         b_exc = False
+
+
 
     global s_exc
 
+
+
     if s_exc == None:
+
         s_exc = False
+
+'''
 
 
 def identify_arbitrage(symbol, exchange_list):
@@ -81,9 +121,9 @@ def identify_arbitrage(symbol, exchange_list):
     bid_data = dict()
 
     for e in exchange_list:
+
         exc = getattr(ccxt, e)()
         exc.load_markets()
-
         symbols_allowed = exc.symbols
 
         if symbol in symbols_allowed:
@@ -98,22 +138,58 @@ def identify_arbitrage(symbol, exchange_list):
     ask_data_sorted = sorted(ask_data.items(), key=itemgetter(1))
     bid_data_sorted = sorted(bid_data.items(), key=itemgetter(1), reverse=True)
 
-    print(ask_data_sorted)
-    print(bid_data_sorted)
+    #print(ask_data_sorted)
+    #print(bid_data_sorted)
 
-    ask_market = ask_data_sorted[0][0]
-    ask_price = ask_data_sorted[0][1]
+    if (len(ask_data_sorted) == 0 and len(bid_data_sorted) == 0):
+        print('No exchanges found that support the currencies!')
 
-    bid_market = bid_data_sorted[0][0]
-    bid_price = bid_data_sorted[0][1]
+    elif (len(ask_data_sorted) == 1 and len(bid_data_sorted) == 1):
+
+        if ask_data_sorted[1][0] == bid_data_sorted[1][0]:
+            print('currencies not supported by enough exchanges to find arbitrage opportunities!')
+
+    else:
+
+        a = [len(ask_data_sorted), len(bid_data_sorted)]
+        refund_symbol = False
+
+        for i in range(min(a)):
+
+            ask_market = ask_data_sorted[i][0]
+            ask_price = ask_data_sorted[i][1]
+
+            for j in range(min(a)):
+
+                bid_market = bid_data_sorted[j][0]
+                bid_price = bid_data_sorted[j][1]
+
+                if (ask_market != bid_market):
+
+                    refund_symbol = check_refund_possibility(stable_coins, symbol, ask_market, bid_market)
+                    #print('symbol = ' + str(refund_symbol))
+                    #print('i = ' + str(i))
+                    #print('j = ' + str(j))
+
+                    if (refund_symbol == False):
+                        continue
+
+                    else:
+                        break
+
+    if (refund_symbol == False) and (i == min(a) - 1):
+        flag_2 = True
+
+    else:
+        flag_2 = False
 
     print('market to buy from : ' + str(ask_market))
     print('market to sell in : ' + str(bid_market))
 
-    return ask_market, bid_market, ask_price, bid_price
+    return ask_market, bid_market, ask_price, bid_price, flag_2
 
 
-def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amount):
+def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amount, flag):
     '''
     Initiate a transaction between accounts and exchanges
     :param accounts: dictionary of exchanges that we own with the account information as their values
@@ -123,26 +199,26 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
     :return: Profit value after the exchange
     '''
 
+    if flag == True:
+        return 'Could not find a pair of exchanges that support stable coins! \nThus cannot do Arbitrage!'
+
+    if ask_market == bid_market:
+        return 'No arbitrage possibilies were found!'
+
     buy_exchange = getattr(ccxt, ask_market)
     sell_exchange = getattr(ccxt, bid_market)
-
     buy_account = accounts[ask_market]
     sell_account = accounts[bid_market]
-
     buy = buy_exchange(buy_account)
     sell = sell_exchange(sell_account)
-
     buy.load_markets()
     sell.load_markets()
-
-    b_exc = ask_market
-    s_exc = bid_market
 
     '''Refund symbol is the symbol that has stable coin as the base currency.
     This symbol will be used to buy stable coin in sell market, send it to the buy market,
     and sell in the buy market to get back the quote currency. This will complete the arbitrage.'''
 
-    refund_symbol = check_refund_possibility(stable_coins, symbol, b_exc, s_exc)
+    refund_symbol = check_refund_possibility(stable_coins, symbol, ask_market, bid_market)
 
     '''Refund symbol = False if both the exchanges do not have the same stable coin!
     Else it will contain the pair of currency symbol, i.e., Satble_coin_symbol/original_quote_symbol.'''
@@ -152,31 +228,34 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
 
     else:
         '''To store the price of the stable coin that will be used to create limit order for buying and selling the coins!'''
-        refund_cur_price = sell.fetch_order_book(refund_symbol)['asks'][0][0]
 
-    if check_status(b_exc, s_exc, buy_id, sell_id, buy_stable_id, sell_stable_id):
+        refund_cur_price = sell.fetch_order_book(refund_symbol)['asks'][0][0]
+        # if check_status(b_exc,s_exc,buy_id,sell_id,cancel_id,buy_stable_id,sell_stable_id):
         '''Check if the previous arbitrage has been completed!'''
 
         if buy.has['createMarketOrder'] and sell.has['createMarketOrder'] and refund_symbol:
-            buy_id = buy.create_limit_buy_order(symbol, amount, ask_price)['id']  # purchase the currency
 
+            buy_id = buy.create_limit_buy_order(symbol, amount, ask_price)['id']  # purchase the currency
             '''Create a buy order for the main arbitrage base currency.'''
 
             if transfer(ask_market, bid_market, symbol.split('/')[0], amount):  # initiate the transfer and check if it returns true.
 
                 '''Create a sell order for the main arbitrage base currency.'''
                 sell_id = sell.create_limit_sell_order(symbol, amount, bid_price)['id']
-
+                profit = calculate_profit(b_exc, s_exc, buy_id, sell_id, amount)
                 '''Create a buy order for the stable coin.'''
-                buy_stable_id = sell.create_limit_buy_order(refund_symbol, refund_cur_price)['id']
+
+                amount_refund = profit / refund_cur_price
+                buy_stable_id = sell.create_limit_buy_order(refund_symbol, amount_refund, refund_cur_price)['id']
 
                 if transfer(ask_market, bid_market, symbol.split('/')[0], amount):
-                    sell_stable_id = buy.create_limit_sell_order(refund_symbol, amount, refund_cur_price)['id']
+                    sell_stable_id = buy.create_limit_sell_order(refund_symbol, amount_refund, refund_cur_price)['id']
 
-                buy_cost = buy.fetch_my_trades(symbol)[-1]['cost']
+                b_exc = ask_market
+                s_exc = bid_market
 
-                sell_cost = sell.fetch_my_trades(symbol)[-1]['cost']
-
+                # buy_cost = buy.fetch_my_trades(symbol)[-1]['cost']
+                # sell_cost = sell.fetch_my_trades(symbol)[-1]['cost']
                 # print('sell_cost = ' + str(sell_cost))
                 # print('buy_cost = ' + str(buy_cost))
 
@@ -185,9 +264,7 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
                 print('Buy_stable_id = ' + str(buy_stable_id))
                 print('Sell_stable_id = ' + str(sell_stable_id))
 
-                return (sell_cost - buy_cost)
-
-
+                return 'Arbitrage successful!'  # (sell_cost - buy_cost)
 
             else:
 
@@ -198,8 +275,11 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
                 cancel_id = buy.create_limit_sell_order(symbol, amount, bid_price)['id']
 
             return 'Transfer unsuccessful! The bought currency is sold back!'
+
         return 'Arbitrage could not be done as some exchange does not support stable coins!'
-    return 'Previous arbitrage left to be completed!'
+
+    # return 'Previous arbitrage left to be completed!'
+
 
 def transfer(from_market, to_market, curr, amt):
     '''
@@ -211,7 +291,9 @@ def transfer(from_market, to_market, curr, amt):
     '''
 
     def timing():
+
         '''re run this function until the transfer is complete'''
+
         if check_balance(accounts, to_market, curr)[1] != to_balance_prior_transfer:
             return True
 
@@ -219,20 +301,18 @@ def transfer(from_market, to_market, curr, amt):
 
     if from_market == 'binance':
         print('cannot transfer from binance')
+
         return False
 
     from_exchange = getattr(ccxt, from_market)
     from_account = from_exchange(accounts[from_market])
-
     to_exchange = getattr(ccxt, to_market)
     to_account = to_exchange(accounts[to_market])
-
     from_account.load_markets()
     to_account.load_markets()
     to_balance_prior_transfer = check_balance(accounts, to_market, curr)
     to = to_account.fetch_deposit_address(curr)
     add = to['address']
-
     from_account.withdraw(curr, amt, add)
     start = time.time()
 
@@ -241,6 +321,7 @@ def transfer(from_market, to_market, curr, amt):
         end = time.time()
 
         if timing():
+
             return True
 
         elif end - start > 3600:  # 1 hour
@@ -260,54 +341,49 @@ def check_balance(accounts, exchange, curr):
     info = info(accounts[exchange])
     info.load_markets()
     info = info.fetch_balance()
+
     return (curr, info['total']['{}'.format(curr)])
 
 
-def check_status(b_exc, s_exc, buy_id, sell_id, cancel_id, buy_stable_id, sell_stable_id, cancel_stable_id):
-    if b_exc and s_exc:
-        return True
+def check_status(b_ex, s_ex, b_id, s_id, c_id, b_stable_id, s_stable_id):
 
-    else:
+    if b_ex and s_ex:
 
-        b = getattr(ccxt, b_exc)(accounts[b_exc])
-        s = getattr(ccxt, s_exc)(accounts[s_exc])
-
+        b = getattr(ccxt, b_ex)(accounts[b_ex])
+        s = getattr(ccxt, s_ex)(accounts[s_ex])
         b.load_markets()
         s.load_markets()
 
-    if buy_id:
-        b_status = b.fetchOrder(buy_id)['status']
+    else:
+        return True
+
+    if b_id:
+        b_status = b.fetchOrder(b_id)['status']
 
     else:
         b_status = False
 
-    if sell_id:
-        s_status = s.fetchOrder(sell_id)['status']
-
-
+    if s_id:
+        s_status = s.fetchOrder(s_id)['status']
 
     else:
         s_status = False
 
-    if buy_stable_id:
-        b_stable_status = s.fetchOrder(buy_stable_id)['status']
-
-
+    if b_stable_id:
+        b_stable_status = s.fetchOrder(b_stable_id)['status']
 
     else:
         b_stable_status = False
 
-    if sell_stable_id:
-        s_stable_status = b.fetchOrder(sell_stable_id)['status']
+    if s_stable_id:
+        s_stable_status = b.fetchOrder(s_stable_id)['status']
 
     else:
-
         s_stable_status = False
 
     '''If buy and sell orders for the normal coin and the stable coin are filled return True to indicate end of arbitrage.'''
 
     if b_status == 'closed' and s_status == 'closed' and b_stable_status == 'closed' and s_stable_status == 'closed':
-
         '''After all the orders are filled(i.e., the arbitrage is complete) we set the order ids and the order status 
         to false! It is to show that we have completed the arbitrage and are ready for the next arbitrage!'''
 
@@ -319,52 +395,90 @@ def check_status(b_exc, s_exc, buy_id, sell_id, cancel_id, buy_stable_id, sell_s
         s_status = False
         b_stable_status = False
         s_stable_status = False
+
         return True
 
     else:
         return False
 
-    if cancel_id:
-        c = getattr(ccxt, b_exc)(accounts[b_exc])
+    if c_id:
+
+        c = getattr(ccxt, b_ex)(accounts[b_ex])
+
         c.load_markets()
-        c_status = c.fetchOrder(cancel_id)['status']
+
+        c_status = c.fetchOrder(c_id)['status']
+
         if c_status == 'closed':
             cancel_id = False
+
             return True
 
     return False
 
 
-def check_refund_possibility(stable_coins, symbol, b_exc, s_exc):
+def check_refund_possibility(stable_coins, symbol, b_ex, s_ex):
 
     base_curr = symbol.split('/')[0]
     quote_curr = symbol.split('/')[1]
-
-    b = getattr(ccxt, b_exc)(accounts[b_exc])
-    s = getattr(ccxt, s_exc)(accounts[s_exc])
-
+    b = getattr(ccxt, b_ex)(accounts[b_ex])
+    s = getattr(ccxt, s_ex)(accounts[s_ex])
     b.load_markets()
     s.load_markets()
 
     for a in stable_coins:
+
         '''Create a symbol where the base is stable coin and the quote is the original quote.'''
         temp = a + '/' + quote_curr
+
         '''Check if the symbol is supported by both the exchanges.'''
-        if (temp in s for s in b.symbols) and (temp in b for b in s.symbols):
+        b_sym = b.symbols
+        s_sym = s.symbols
+
+        if ((temp in b_sym) and (temp in s_sym)):
             refund_symbol = temp
+            break
+
         else:
             refund_symbol = False
 
     return refund_symbol
 
 
+def calculate_profit(b_ex, s_ex, b_id, s_id, amount):
+
+    b = getattr(ccxt, b_ex)(accounts[b_ex])
+    s = getattr(ccxt, s_ex)(accounts[s_ex])
+
+    b.load_markets()
+    s.load_markets()
+
+    if ('rate' in b.fetchOrder(b_id)) and ('rate' in s.fetchOrder(s_id)):
+
+        b_rate = b.fetchOrder(b_id)['fee']['rate']
+        s_rate = s.fetchOrder(s_id)['fee']['rate']
+
+    b_price = b.fetchOrder(b_id)['price']
+    s_price = s.fetchOrder(s_id)['price']
+    profit = (s_price * amount) * (1 - s_rate) - (b_price * amount) * (1 + b_rate)
+
+    return profit
+
+
 def main():
+
     '''main function to run with the calls'''
+
+    '''Define a function to initialise the order ids and exchange names to some value at the
+    start of the first arbitrage to make sure that arbitrage is started for the first time without
+    checking for the previous arbitrage!'''
+
     # print(check_balance(accounts,'bitstamp', 'BTC'))
-    initialize()
-    ask_market, bid_market, ask_price, bid_price = identify_arbitrage('LTC/USD', exchanges)
-    profit = buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, 'LTC/USD', 0.1)
-    print('Profit earned by the arbitrage trade : ' + str(profit))
+    # initialize()
+
+    ask_market, bid_market, ask_price, bid_price, flag = identify_arbitrage('LTC/USD', exchanges)
+    profit = buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, 'LTC/USD', 0.1, flag)
+    print(str(profit))
 
 
 if __name__ == '__main__':
