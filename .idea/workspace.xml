@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="23705af8-0d78-494e-995c-2aa733ffac2a" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/test/arbitrage.py" afterPath="$PROJECT_DIR$/test/arbitrage.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,8 +16,8 @@
       <file leaf-file-name="arbitrage.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test/arbitrage.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="890">
-              <caret line="200" column="0" lean-forward="true" selection-start-line="200" selection-start-column="0" selection-end-line="200" selection-end-column="0" />
+            <state relative-caret-position="2856">
+              <caret line="486" column="10" lean-forward="true" selection-start-line="486" selection-start-column="10" selection-end-line="486" selection-end-column="10" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -677,8 +676,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/test/arbitrage.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="890">
-          <caret line="200" column="0" lean-forward="true" selection-start-line="200" selection-start-column="0" selection-end-line="200" selection-end-column="0" />
+        <state relative-caret-position="2856">
+          <caret line="486" column="10" lean-forward="true" selection-start-line="486" selection-start-column="10" selection-end-line="486" selection-end-column="10" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>

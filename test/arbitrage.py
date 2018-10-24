@@ -240,6 +240,9 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
 
             if transfer(ask_market, bid_market, symbol.split('/')[0], amount):  # initiate the transfer and check if it returns true.
 
+                b_exc = ask_market
+                s_exc = bid_market
+
                 '''Create a sell order for the main arbitrage base currency.'''
                 sell_id = sell.create_limit_sell_order(symbol, amount, bid_price)['id']
                 profit = calculate_profit(b_exc, s_exc, buy_id, sell_id, amount)
@@ -251,8 +254,7 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
                 if transfer(ask_market, bid_market, symbol.split('/')[0], amount):
                     sell_stable_id = buy.create_limit_sell_order(refund_symbol, amount_refund, refund_cur_price)['id']
 
-                b_exc = ask_market
-                s_exc = bid_market
+
 
                 # buy_cost = buy.fetch_my_trades(symbol)[-1]['cost']
                 # sell_cost = sell.fetch_my_trades(symbol)[-1]['cost']
