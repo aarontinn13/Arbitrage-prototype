@@ -30,59 +30,10 @@ accounts = {'bitstamp': {'uid': 'kwsm6715',
             }
 
 exchanges = ['bitstamp', 'binance', 'livecoin', 'yobit', 'poloniex']
-
 alternate_coins = ['BTC', 'LTC', 'ETH', 'ZEC', 'DASH', 'XRP', 'XMR', 'BCH', 'NEO', 'ADA', 'EOS']
-
 stable_coins = ['USDT', 'TUSD', 'DAI']
 
 global buy_id, sell_id, cancel_id, b_exc, s_exc, buy_stable_id, sell_stable_id
-
-'''
-def initialize(): 
-
-    global buy_id
-
-    if buy_id == None:
-
-        buy_id = False
-
-    global sell_id
-
-    if sell_id == None:
-
-        sell_id = False
-
-    global buy_stable_id
-
-    if buy_stable_id == None:
-
-        buy_stable_id = False
-
-    global sell_stable_id
-
-    if sell_stable_id == None:
-
-        sell_stable_id = False
-
-    global cancel_id
-
-    if cancel_id == None:
-
-        cancel_id = False
-
-    global b_exc
-
-    if b_exc == None:
-
-        b_exc = False
-
-    global s_exc
-
-    if s_exc == None:
-
-        s_exc = False
-'''
-
 
 def identify_arbitrage(symbol, exchange_list):
     '''
@@ -114,7 +65,7 @@ def identify_arbitrage(symbol, exchange_list):
     print(bid_data_sorted)
 
     if (len(ask_data_sorted) == 0 and len(bid_data_sorted) == 0):
-        print('No exchnages found that support the currencies!')
+        print('No exchanges found that support the currencies!')
     elif (len(ask_data_sorted) == 1 and len(bid_data_sorted) == 1):
         if ask_data_sorted[1][0] == bid_data_sorted[1][0]:
             print('currencies not supported by enough exchanges to find arbitrage opportunities!')
@@ -306,7 +257,7 @@ def check_balance(accounts, exchange, curr):
 def check_status(b_ex, s_ex, b_id, s_id, c_id, b_stable_id, s_stable_id):
     if b_ex and s_ex:
         b = getattr(ccxt, b_ex)(accounts[b_ex])
-        s = getattr(ccxt, s_ex)(account[s_ex])
+        s = getattr(ccxt, s_ex)(accounts[s_ex])
         b.load_markets()
         s.load_markets()
     else:
@@ -405,11 +356,9 @@ def check_refund_possibility(stable_coins, symbol, b_ex, s_ex):
             break
         else:
             refund_symbol = False
-    if refund_symbol == False:
-        print(
-            '\nThis is the information while searching for the alternate coins! Just to visualise what the function is doing!')
-        print(
-            'Displaying the following: \n1) Coin name \n2) Bid price \n3) Ask_price \n4) Percentage difference between the prices')
+    if not refund_symbol:
+        print('\nThis is the information while searching for the alternate coins! Just to visualise what the function is doing!')
+        print('Displaying the following: \n1) Coin name \n2) Bid price \n3) Ask_price \n4) Percentage difference between the prices')
         for a in alternate_coins:
 
             '''Create a symbol where the base is coin from alternate coin list and the quote is the original quote.'''
@@ -461,13 +410,13 @@ def check_refund_possibility(stable_coins, symbol, b_ex, s_ex):
 
 def calculate_profit(b_ex, s_ex, b_id, s_id, amount):
     b = getattr(ccxt, b_ex)(accounts[b_ex])
-    s = getattr(ccxt, s_ex)(account[s_ex])
+    s = getattr(ccxt, s_ex)(accounts[s_ex])
     b.load_markets()
     s.load_markets()
 
     if ('rate' in b.fetchOrder(b_id)) and ('rate' in s.fetchOrder(s_id)):
         b_rate = b.fetchOrder(b_id)['fee']['rate']
-        s_rate = s_fetchOrder(s_id)['fee']['rate']
+        s_rate = s.fetchOrder(s_id)['fee']['rate']
 
     b_price = b.fetchOrder(b_id)['price']
     s_price = s.fetchOrder(s_id)['price']
