@@ -26,7 +26,6 @@ accounts = {'bitstamp': {'uid': 'kwsm6715',
                          'api_key': 'fVKyf8EyTMD4gsvZ3KneYB8WEBpeKqhH',
                          'secret': '5h4XPCRnt9AraXePPEfJQfP6mjs9YspN',
                          },
-
             }
 
 exchanges = ['bitstamp', 'binance', 'livecoin', 'yobit', 'poloniex']
@@ -127,8 +126,6 @@ def buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, symbol, amo
     '''Refund symbol is the symbol that has stable coin as the base currency.
     This symbol will be used to buy stable coin in sell market, send it to the buy market,
     and sell in the buy market to get back the quote currency. This will complete the arbitrage.'''
-
-    # refund_symbol = check_refund_possibility(stable_coins,symbol,ask_market,bid_market)
 
     '''Refund symbol = False if both the exchanges do not have the same stable coin!
     Else it will contain the pair of currency symbol, i.e., Satble_coin_symbol/original_quote_symbol.'''
@@ -424,7 +421,6 @@ def calculate_profit(b_ex, s_ex, b_id, s_id, amount):
     profit = (s_price * amount) * (1 - s_rate) - (b_price * amount) * (1 + b_rate)
     return profit
 
-
 def main():
     '''main function to run with the calls'''
     '''Define a function to initialise the order ids and exchange names to some value at the
@@ -433,10 +429,16 @@ def main():
 
     # print(check_balance(accounts,'bitstamp', 'BTC'))
     # initialize()
-    ask_market, bid_market, ask_price, bid_price, flag, refund_symbol = identify_arbitrage('LTC/USD', exchanges)
-    profit = buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, 'LTC/USD', 0.1, flag, refund_symbol)
-    print(str(profit))
+    #ask_market, bid_market, ask_price, bid_price, flag, refund_symbol = identify_arbitrage('LTC/USD', exchanges)
+    #profit = buy_sell(accounts, ask_market, bid_market, ask_price, bid_price, 'LTC/USD', 0.1, flag, refund_symbol)
+    #print(str(profit))
 
+    for i in exchanges:
+        for j in alternate_coins:
+            try:
+                print(i, check_balance(accounts,i,j))
+            except:
+                continue
 
 if __name__ == '__main__':
     main()
